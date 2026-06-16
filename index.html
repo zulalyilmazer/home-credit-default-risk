@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home Credit - Yapay Zeka Risk & Otomasyon Paneli</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f6f9; margin: 0; padding: 20px; color: #333; }
+        .container { max-width: 900px; margin: 0 auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        h1 { color: #d32f2f; margin-top: 0; font-size: 24px; border-bottom: 2px solid #f4f6f9; padding-bottom: 10px; }
+        .description { color: #666; font-size: 14px; margin-bottom: 25px; }
+        .form-group { margin-bottom: 20px; }
+        label { display: block; font-weight: bold; margin-bottom: 8px; font-size: 14px; }
+        select, input { width: 100%; padding: 12px; border: 1px solid #ced4da; border-radius: 6px; box-sizing: border-box; font-size: 14px; }
+        button { background-color: #d32f2f; color: white; border: none; padding: 12px 24px; font-size: 16px; font-weight: bold; border-radius: 6px; cursor: pointer; width: 100%; transition: background 0.2s; }
+        button:hover { background-color: #b71c1c; }
+        
+        /* Sistem Log Ekranı */
+        .log-container { background-color: #1e1e1e; color: #a6e22e; padding: 20px; border-radius: 8px; font-family: 'Courier New', Courier, monospace; margin-top: 30px; display: none; min-height: 200px; box-shadow: inset 0 0 10px rgba(0,0,0,0.5); }
+        .log-line { margin-bottom: 8px; line-height: 1.4; font-size: 13px; }
+        .log-info { color: #00d2ff; }
+        .log-success { color: #a6e22e; font-weight: bold; }
+        .log-danger { color: #f92672; font-weight: bold; }
+        .log-warning { color: #fd971f; }
+        
+        /* Sonuç Kartları */
+        .result-card { margin-top: 20px; padding: 20px; border-radius: 8px; display: none; animation: fadeIn 0.5s; }
+        .onay-kart { background-color: #e8f5e9; border-left: 6px solid #2e7d32; color: #1b5e20; }
+        .red-kart { background-color: #ffebee; border-left: 6px solid #c62828; color: #b71c1c; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>📊 Home Credit — Canlı Risk Tahmin & Otomasyon Simülatörü</h1>
+    <p class="description">Bu arayüz, arka planda eğittiğimiz Lojistik Regresyon modelini ve eş zamanlı çalışan şirket içi otomasyon (pipeline) sistemini simüle etmektedir.</p>
+    
+    <div class="form-group">
+        <label for="musteri">Müşteri Seçin (Test Verisi Örnekleri):</label>
+        <select id="musteri" onchange="guncelleKredi()">
+            <option value="Ahmet Yılmaz" data-target="0" data-tutar="150.000">Ahmet Yılmaz (Düşük Risk Profili - Temiz Geçmiş)</option>
+            <option value="Ayşe Demir" data-target="1" data-tutar="250.000">Ayşe Demir (Yüksek Risk Profili - Gecikmeli Ödemeler)</option>
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label id="tutarLabel">Talep Edilen Kredi Tutarı: 150.000 TL</label>
+    </div>
+
+    <button onclick="simulasyonuBaslat()">Yapay Zeka Risk Analizini Tetikle</button>
+
+    <!-- Vibe Coding Sistem Log Ekranı -->
+    <div id="logEkranı" class="log-container"></div>
+
+    <!-- Dinamik Sonuç Kartları -->
+    <div id="onaySonuc" class="result-card onay-kart">
+        <h3>🎉 BAŞVURU OTOMATİK ONAYLANDI (TARGET: 0)</h3>
+        <p><strong>Finansal Etki:</strong> Bankaya tahmini +3 birim kazanç süreci başladı.</p>
+        <p>📩 <strong>Otomasyon Aksiyonu:</strong> Müşteriye "Krediniz Onaylandı" bilgilendirme e-postası ve ödeme planı detayları için <strong>Müşteri Danışmanı Randevu Linki</strong> otomatik olarak gönderildi.</p>
+    </div>
+
+    <div id="redSonuc" class="result-card red-kart">
+        <h3>❌ BAŞVURU OTOMATİK REDDEDİLDİ (TARGET: 1)</h3>
+        <p><strong>Finansal Etki:</strong> Banka olası bir -10 birimlik zarardan (temerrüt) korundu.</p>
+        <p>🚨 <strong>Otomasyon Aksiyonu:</strong> Müşteriye nazik bir red e-postası iletildi. Eş zamanlı olarak <strong>Kredi Risk Yönetimi ekibine ve şirket içi #risk-uyarı Slack kanalına</strong> anlık alarm bildirimi düşürüldü.</p>
+    </div>
+</div>
+
+<script>
+    function guncelleKredi() {
+        const select = document.getElementById('musteri');
+        const tutar = select.options[select.selectedIndex].getAttribute('data-tutar');
+        document.getElementById('tutarLabel').innerText = `Talep Edilen Kredi Tutarı: ${tutar} TL`;
+        gizleSonuclar();
+    }
+
+    function gizleSonuclar() {
+        document.getElementById('logEkranı').style.display = 'none';
+        document.getElementById('onaySonuc').style.display = 'none';
+        document.getElementById('redSonuc').style.display = 'none';
+    }
+
+    function ekranaYaz(metin, stilSınıfı = 'log-info', gecikme) {
+        return new Promise(resolve => {
+            setTimeout(() => {
+                const logEkranı = document.getElementById('logEkranı');
+                const t = new Date().toLocaleTimeString();
+                logEkranı.innerHTML += `<div class="log-line">[${t}] <span class="${stilSınıfı}">${metin}</span></div>`;
+                logEkranı.scrollTop = logEkranı.scrollHeight;
+                resolve();
+            }, gecikme);
+        });
+    }
+
+    async function simulasyonuBaslat() {
+        gizleSonuclar();
+        
+        const select = document.getElementById('musteri');
+        const isim = select.value;
+        const target = select.options[select.selectedIndex].getAttribute('data-target');
+        
+        const logEkranı = document.getElementById('logEkranı');
+        logEkranı.innerHTML = '';
+        logEkranı.style.display = 'block';
+
+        await ekranaYaz(`[SİSTEM] '${isim}' için uçtan uca veri hattı (pipeline) tetiklendi.`, 'log-info', 0);
+        await ekranaYaz(`[VERİ ENTEGRASYONU] 7 farklı ilişkisel tablodan (bureau, installments_payments, credit_card_balance) müşteri verileri çekiliyor...`, 'log-warning', 1200);
+        await ekranaYaz(`[ÖZELLİK MÜHENDİSLİĞİ] Geçmiş ödemeler analiz edildi. Müşterinin ortalama gecikme gün sayısı hesaplanıyor...`, 'log-warning', 1500);
+        
+        if(target === "0") {
+            await ekranaYaz(`[YAPAY ZEKA] Lojistik Regresyon Modeli çalıştırıldı. Risk Skoru: %14.2 (Güvenli Sınır)`, 'log-info', 1500);
+            await ekranaYaz(`[POLİTİKA] Eşik Değeri (%25) kontrol edildi. Sonuç: TARGET = 0 (Düşük Risk)`, 'log-success', 1000);
+            await ekranaYaz(`[OTOMASYON] Şirket içi onay mekanizmaları tetikleniyor...`, 'log-info', 1000);
+            await ekranaYaz(`[API TETHİKLEME] Müşteri veri tabanı güncellendi. SMS ve E-posta API servisleri çalıştırıldı.`, 'log-success', 1200);
+            
+            setTimeout(() => {
+                document.getElementById('onaySonuc').style.display = 'block';
+            }, 800);
+        } else {
+            await ekranaYaz(`[YAPAY ZEKA] Lojistik Regresyon Modeli çalıştırıldı. Risk Skoru: %58.7 (Yüksek Risk!)`, 'log-info', 1500);
+            await ekranaYaz(`[POLİTİKA] Eşik Değeri (%25) aşıldı. Sonuç: TARGET = 1 (Temerrüt Riski)`, 'log-danger', 1000);
+            await ekranaYaz(`[OTOMASYON] Kritik alarm protokolü devreye giriyor...`, 'log-warning', 1000);
+            await ekranaYaz(`[API TETİKLEME] #risk-uyarı Slack webhook hattına JSON verisi gönderildi.`, 'log-danger', 1200);
+            
+            setTimeout(() => {
+                document.getElementById('redSonuc').style.display = 'block';
+            }, 800);
+        }
+    }
+</script>
+
+</body>
+</html>
