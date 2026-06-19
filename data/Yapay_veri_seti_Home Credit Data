@@ -1,0 +1,18 @@
+Doğrudan veri setinin orijinal istatistiksel özetini - ortalama değerlerini kullandım.
+Kaggle'daki Home Credit veri setinin "AMT_CREDIT" sütununun ortalaması 599,026.00$
+
+Orijinal veri setinin istatistiksel dağılımını (mean ve std) kullanarak,
+kod içinde gerçekçi bir simülasyon veri seti oluşturdum
+
+np.random.seed(42) -- Rastgele sayı üretecini 42 de sabitledim
+
+--Orijinal Kaggle veri setinin istatistiksel dağılımını taklit eden 1.000 kişilik yapay bir kredi portföyü oluşturuyor.
+
+simule_krediler = np.random.normal(loc=599026, scale=402490, size=1000) --mean:599026 std:402490
+simule_krediler = np.clip(simule_krediler, 45000, 4050000) # Gerçek veri sınırları
+
+Düzenli ödeyenlerden elde edilen net %20 faiz kazancı--Home Credit gibi yüksek riskli ve mikro kredi odaklı kurumlarda bu net kârlılık marjı global olarak ortalama %20 seviyesindedir.
+Temerrüde düşenlerden ortalama %70 net ana para kaybı
+COST-BENEFIT MATRIX
+Ortalama Kredi Tutarı: 599,026.00$, Müşteri Başına Ortalama Kazanç: 119,805.20$, Ödemeyen Müşteri Başına Ortalama Kayıp: 419,318.20$
+Gerçek Risk Oranı: 3.5 kat
